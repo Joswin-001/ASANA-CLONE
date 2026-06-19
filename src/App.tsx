@@ -13,7 +13,7 @@ import { TaskDetailDrawer } from './components/TaskDetailDrawer';
 import { Celebration } from './components/Celebration';
 
 const AppContent: React.FC = () => {
-  const { activeView, sidebarCollapsed, activeUser } = useAsana();
+  const { activeView, sidebarCollapsed, setSidebarCollapsed, activeUser } = useAsana();
 
   if (!activeUser) {
     return <Login />;
@@ -40,6 +40,10 @@ const AppContent: React.FC = () => {
 
   return (
     <div className={`app-container ${sidebarCollapsed ? 'collapsed' : ''}`}>
+      {/* Sidebar overlay backdrop on mobile */}
+      {!sidebarCollapsed && (
+        <div className="sidebar-backdrop" onClick={() => setSidebarCollapsed(true)}></div>
+      )}
       {/* Shell Layout: Left Sidebar */}
       <Sidebar />
 

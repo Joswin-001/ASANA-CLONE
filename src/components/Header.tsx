@@ -13,7 +13,9 @@ export const Header: React.FC = () => {
     activeUser,
     addTask,
     outlets,
-    zones
+    zones,
+    sidebarCollapsed,
+    setSidebarCollapsed
   } = useAsana();
 
   const [showQuickAdd, setShowQuickAdd] = useState(false);
@@ -63,6 +65,13 @@ export const Header: React.FC = () => {
     <header className="header-container glass">
       {/* Title section and Subtitle Context */}
       <div className="header-left">
+        <button 
+          className="mobile-hamburger-btn" 
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          title="Toggle Navigation Menu"
+        >
+          <Icons.Menu size={20} />
+        </button>
         <div className="title-section-block">
           <h1 className="header-title">{getHeaderTitle()}</h1>
           <span className="header-context-label">{getUserContextLabel()}</span>
@@ -194,6 +203,20 @@ export const Header: React.FC = () => {
           display: flex;
           align-items: center;
           gap: 24px;
+        }
+
+        .mobile-hamburger-btn {
+          display: none;
+          color: var(--text-secondary);
+          align-items: center;
+          justify-content: center;
+          padding: 6px;
+          border-radius: var(--radius-sm);
+          cursor: pointer;
+        }
+        .mobile-hamburger-btn:hover {
+          background-color: var(--bg-hover);
+          color: var(--text-primary);
         }
 
         .title-section-block {

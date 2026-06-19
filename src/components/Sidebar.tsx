@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAsana } from '../context/AsanaContext';
+import { useAsana, type ViewType } from '../context/AsanaContext';
 import * as Icons from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -21,7 +21,13 @@ export const Sidebar: React.FC = () => {
       case 'store_manager': return 'Store Manager';
       case 'employee': return 'Outlet Associate';
       case 'admin': return 'System Admin';
-      default: return 'User';
+    }
+  };
+
+  const handleNavigate = (view: ViewType) => {
+    setActiveView(view);
+    if (window.innerWidth < 768) {
+      setSidebarCollapsed(true);
     }
   };
 
@@ -29,7 +35,7 @@ export const Sidebar: React.FC = () => {
     <aside className={`sidebar-container ${sidebarCollapsed ? 'collapsed' : ''}`}>
       {/* Sidebar Header / Logo */}
       <div className="sidebar-header">
-        <div className="logo-area" onClick={() => setActiveView('dashboard')}>
+        <div className="logo-area" onClick={() => handleNavigate('dashboard')}>
           <div className="logo-badge">PJ</div>
           {!sidebarCollapsed && <span className="logo-text">parakkat</span>}
         </div>
@@ -64,7 +70,7 @@ export const Sidebar: React.FC = () => {
       <div className="sidebar-menu">
         <button 
           className={`menu-item ${activeView === 'dashboard' ? 'active' : ''}`}
-          onClick={() => setActiveView('dashboard')}
+          onClick={() => handleNavigate('dashboard')}
           title="Dashboard / Broadcast Inbox"
         >
           <Icons.Home size={18} />
@@ -74,7 +80,7 @@ export const Sidebar: React.FC = () => {
         {/* CEO & Admin can see all views, Managers & Employees can access their task grid views */}
         <button 
           className={`menu-item ${activeView === 'list' ? 'active' : ''}`}
-          onClick={() => setActiveView('list')}
+          onClick={() => handleNavigate('list')}
           title="Task List Grid"
         >
           <Icons.ListTodo size={18} />
@@ -83,7 +89,7 @@ export const Sidebar: React.FC = () => {
 
         <button 
           className={`menu-item ${activeView === 'board' ? 'active' : ''}`}
-          onClick={() => setActiveView('board')}
+          onClick={() => handleNavigate('board')}
           title="Kanban Board View"
         >
           <Icons.Columns size={18} />
@@ -92,7 +98,7 @@ export const Sidebar: React.FC = () => {
 
         <button 
           className={`menu-item ${activeView === 'calendar' ? 'active' : ''}`}
-          onClick={() => setActiveView('calendar')}
+          onClick={() => handleNavigate('calendar')}
           title="Calendar Monthly Schedule"
         >
           <Icons.Calendar size={18} />
@@ -102,7 +108,7 @@ export const Sidebar: React.FC = () => {
         {(activeUser.role === 'ceo' || activeUser.role === 'admin' || activeUser.role === 'zonal_manager' || activeUser.role === 'store_manager') && (
           <button 
             className={`menu-item ${activeView === 'hr' ? 'active' : ''}`}
-            onClick={() => setActiveView('hr')}
+            onClick={() => handleNavigate('hr')}
             title="HR Automation Platform"
           >
             <Icons.UserCheck size={18} />
@@ -113,7 +119,7 @@ export const Sidebar: React.FC = () => {
         {activeUser.role === 'admin' && (
           <button 
             className={`menu-item ${activeView === 'admin' ? 'active' : ''}`}
-            onClick={() => setActiveView('admin')}
+            onClick={() => handleNavigate('admin')}
             title="Outlets & Users Administrator"
           >
             <Icons.Settings size={18} />

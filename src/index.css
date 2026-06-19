@@ -642,3 +642,148 @@ button {
   border-radius: 2px;
 }
 
+/* Responsive Design System & Mobile Styling */
+@media (max-width: 768px) {
+  /* Layout Shell updates */
+  .app-container {
+    grid-template-columns: 1fr !important;
+    grid-template-areas: 
+      "header"
+      "main" !important;
+  }
+
+  .sidebar-container {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: var(--sidebar-width) !important;
+    height: 100vh !important;
+    z-index: 1000 !important;
+    transform: translateX(0) !important;
+    box-shadow: var(--shadow-xl) !important;
+  }
+
+  .sidebar-container.collapsed {
+    transform: translateX(-100%) !important;
+    box-shadow: none !important;
+    width: var(--sidebar-width) !important; /* Keep full size on mobile when open */
+  }
+
+  .sidebar-backdrop {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    z-index: 999 !important;
+    animation: fadeIn var(--transition-fast) !important;
+  }
+
+  .mobile-hamburger-btn {
+    display: flex !important;
+  }
+
+  /* Header mobile adjustment */
+  .header-container {
+    padding: 0 16px !important;
+  }
+
+  .header-left {
+    gap: 12px !important;
+  }
+
+  .header-title {
+    font-size: 16px !important;
+  }
+
+  .header-context-label {
+    font-size: 10px !important;
+  }
+
+  .header-tabs {
+    display: none !important; /* Hide secondary tabs on mobile header, use list select */
+  }
+
+  /* Main Viewport spacing */
+  .main-content-viewport {
+    overflow-y: auto !important;
+    height: calc(100vh - var(--header-height)) !important;
+  }
+
+  /* HR View layout updates */
+  .hr-view-container {
+    padding: 16px !important;
+    height: auto !important;
+    overflow-y: visible !important;
+  }
+
+  .hr-header-block {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .hr-tab-switcher {
+    width: 100% !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    display: flex !important;
+  }
+
+  .hr-tab-switcher::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for tabs */
+  }
+
+  .tab-btn {
+    flex: 1 !important;
+    justify-content: center !important;
+    padding: 8px 10px !important;
+    font-size: 12px !important;
+  }
+
+  .hr-scrollable-content {
+    overflow-y: visible !important;
+  }
+
+  /* Task spreadsheet & lists */
+  .task-spreadsheet-container {
+    overflow-x: auto !important;
+  }
+
+  .grid-table {
+    min-width: 600px !important; /* Allow scroll horizontal */
+  }
+
+  /* Kanban board */
+  .kanban-board-container {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    height: auto !important;
+    gap: 20px !important;
+    padding: 16px !important;
+  }
+
+  .kanban-column {
+    max-height: 450px !important;
+  }
+
+  /* Details Drawers & Modals */
+  .detail-drawer {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .pj-call-modal {
+    width: 100% !important;
+    margin: 0 !important;
+    max-height: 95vh !important;
+  }
+
+  .login-card {
+    padding: 24px 16px !important;
+    width: 95% !important;
+  }
+}
+

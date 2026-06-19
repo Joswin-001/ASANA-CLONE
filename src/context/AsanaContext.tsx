@@ -243,7 +243,9 @@ export const AsanaProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return (saved as 'light' | 'dark') || 'light';
   });
   
-  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => 
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
   const [celebrating, setCelebrating] = useState<boolean>(false);
 
   // Initial loads
