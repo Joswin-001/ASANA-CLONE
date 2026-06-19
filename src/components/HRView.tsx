@@ -12,6 +12,7 @@ export const HRView: React.FC = () => {
     addCandidate,
     triggerAICall,
     updateCandidateOnboarding,
+    updateCandidate,
     uploadPunches,
     outlets
   } = useAsana();
@@ -44,16 +45,12 @@ export const HRView: React.FC = () => {
   const [audioProgress, setAudioProgress] = useState(35);
   const [isSimulatingUpload, setIsSimulatingUpload] = useState(false);
 
-  // 2b. Interactive AI Call Modal States
-  const [activeCallCandidate, setActiveCallCandidate] = useState<Candidate | null>(null);
-  const [callStep, setCallStep] = useState<number>(0); // 0: Dialing, 1: Q1, 2: A1, 3: Q2, 4: A2, 5: Wrapup, 6: Ended
-  const [callTranscript, setCallTranscript] = useState<{ speaker: string; text: string }[]>([]);
-  const [isListening, setIsListening] = useState(false);
-  const [interimSpeech, setInterimSpeech] = useState('');
-  const [inputLanguage, setInputLanguage] = useState<'ml-IN' | 'en-US'>('ml-IN');
-  const [typedAnswer, setTypedAnswer] = useState('');
-  const [isTranslating, setIsTranslating] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  // 2b. CV Screener States
+  const [isScreening, setIsScreening] = useState(false);
+  const [screeningProgress, setScreeningProgress] = useState(0);
+  const [screeningLogs, setScreeningLogs] = useState<string[]>([]);
+  const [targetScreeningRole, setTargetScreeningRole] = useState<string>('Sales Associate');
+  const [activeScreeningCandName, setActiveScreeningCandName] = useState<string>('');
 
   // 3. Payroll States
   const [selectedEmpId, setSelectedEmpId] = useState<string>('');
@@ -240,147 +237,182 @@ ${yesterdayStr},u7,Sandra M.,09:15,18:10,o1,On Time,10`;
     return 'Translation failed';
   };
 
-  const handleRunAICall = async (candId: string) => {
-    const cand = candidates.find(c => c.id === candId);
-    if (!cand) return;
-
-    setActiveCallCandidate(cand);
-    setCallStep(0);
-    setCallTranscript([{ speaker: 'System', text: `Dialing +91 ${cand.phone || '9446738291'}...` }]);
-    setIsListening(false);
-    setInterimSpeech('');
-    setTypedAnswer('');
-
-    // Ringing Simulation
-    setTimeout(() => {
-      setCallStep(1); // Connected
-      setCallTranscript(prev => [
-        ...prev,
-        { speaker: 'System', text: 'Call Connected. AI Recruiter online.' }
-      ]);
-
-      const q1 = cand.appliedRole === 'Store Manager'
-        ? "Hello, I am the Parakkat Jewels automated interview assistant. Tell me about your experience managing store operations and staff schedules."
-        : "Hello, thank you for taking our call. Why are you interested in joining Parakkat Jewels, and tell me about your background explaining jewelry designs?";
-
-      setTimeout(() => {
-        setCallTranscript(prev => [...prev, { speaker: 'AI Agent', text: q1 }]);
-        speakText(q1);
-        setCallStep(2); // Waiting for Answer 1
-      }, 1200);
-    }, 2000);
-  };
-
-  const startListening = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert("Web Speech API is not supported in this browser. Please use Chrome/Edge or type your response.");
-      return;
-    }
-
-    if (isListening) {
-      if (recognitionRef.current) recognitionRef.current.stop();
-      setIsListening(false);
-      return;
-    }
-
-    const rec = new SpeechRecognition();
-    rec.continuous = false;
-    rec.interimResults = true;
-    rec.lang = inputLanguage;
-
-    rec.onstart = () => {
-      setIsListening(true);
-      setInterimSpeech('');
+  const getCandMatchReport = (cand: Candidate) => {
+    const expYears = parseFloat(cand.experience) || 0;
+    const role = cand.appliedRole;
+    
+    const roleSkills: { [key: string]: string[] } = {
+      'Sales Associate': ['customer', 'billing', 'gold', 'malayalam', 'engagement', 'appraisal'],
+      'Store Manager': ['operations', 'inventory', 'staff', 'billing', 'tally', 'audit'],
+      'Accountant': ['tally', 'gst', 'reconciliation', 'excel', 'tax', 'finance']
     };
 
-    rec.onresult = (e: any) => {
-      let text = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        text += e.results[i][0].transcript;
-      }
-      setInterimSpeech(text);
-    };
-
-    rec.onend = () => {
-      setIsListening(false);
-    };
-
-    rec.onerror = (e: any) => {
-      console.error('Speech recognition error', e);
-      setIsListening(false);
-    };
-
-    recognitionRef.current = rec;
-    rec.start();
-  };
-
-  const submitAnswer = async (text: string) => {
-    if (!text.trim()) return;
-    setInterimSpeech('');
-    setTypedAnswer('');
-
-    let displayedText = text;
-    let translationText = '';
-
-    if (inputLanguage === 'ml-IN') {
-      translationText = await translateMalayalamToEnglish(text);
-      displayedText = `Malayalam: ${text}\nEnglish: ${translationText}`;
-    }
-
-    setCallTranscript(prev => [...prev, { speaker: activeCallCandidate?.name || 'Candidate', text: displayedText }]);
-
-    if (callStep === 2) {
-      setCallStep(3); // AI Typing
-      const q2 = activeCallCandidate?.appliedRole === 'Store Manager'
-        ? "Excellent. How do you resolve conflicts between staff members under your charge, and how do you audit daily jewelry assets?"
-        : "Excellent. How do you handle peak rush hours during seasonal promotions, and how do you handle customers who object to gold making charges?";
-
-      setTimeout(() => {
-        setCallTranscript(prev => [...prev, { speaker: 'AI Agent', text: q2 }]);
-        speakText(q2);
-        setCallStep(4); // Waiting for Answer 2
-      }, 1500);
-    } else if (callStep === 4) {
-      setCallStep(5); // AI Wrap-up
-      const wrapText = "Thank you for answering these questions. We have successfully recorded your interview dossier and will review your profile. Have a wonderful day!";
-      
-      setTimeout(() => {
-        setCallTranscript(prev => [...prev, { speaker: 'AI Agent', text: wrapText }]);
-        speakText(wrapText);
-        setCallStep(6); // Interview Completed
-      }, 1500);
-    }
-  };
-
-  const finishCall = async () => {
-    if (!activeCallCandidate) return;
-    const candId = activeCallCandidate.id;
-    const candName = activeCallCandidate.name;
-
-    const savedTranscript = callTranscript.filter(t => t.speaker !== 'System');
-
-    let keywordCount = 0;
-    const fullText = savedTranscript.map(t => t.text.toLowerCase()).join(' ');
-    const keywords = ['gold', 'experience', 'customer', 'audit', 'sales', 'malayalam', 'english', 'സ്വർണം', 'വിൽപ്പന', 'മാനേജർ', 'കസ്റ്റമർ'];
-    keywords.forEach(word => {
-      if (fullText.includes(word)) keywordCount++;
+    const targetSkills = roleSkills[role] || [];
+    const matchedSkills = cand.skills.filter(s => {
+      const sLower = s.toLowerCase();
+      return targetSkills.some(reqSkill => sLower.includes(reqSkill));
     });
 
-    const finalScore = Math.min(98, 72 + (keywordCount * 4) + Math.floor(Math.random() * 5));
+    const unmatchedSkills = cand.skills.filter(s => !matchedSkills.includes(s));
 
-    await triggerAICall(candId, savedTranscript, finalScore);
-
-    setActiveCallCandidate(null);
-    setCallStep(0);
-    setCallTranscript([]);
-
-    triggerToast(`AI Voice interview completed for ${candName}! Score: ${finalScore}%`);
-
-    if (selectedCandidate?.id === candId) {
-      const fresh = candidates.find(c => c.id === candId);
-      if (fresh) setSelectedCandidate(fresh);
+    let expStatus = 'Below Benchmark';
+    let expMsg = `Candidate has ${cand.experience || '0 years'} of experience.`;
+    if (role === 'Store Manager') {
+      if (expYears >= 5) {
+        expStatus = 'Exceeds Benchmark';
+        expMsg = `Experience (${cand.experience}) meets the Store Manager requirement (5+ years).`;
+      } else if (expYears >= 3) {
+        expStatus = 'Meets Minimum';
+        expMsg = `Experience (${cand.experience}) is below target but meets absolute minimum (3+ years).`;
+      } else {
+        expMsg = `Experience (${cand.experience}) is below the required 5+ years for Store Manager.`;
+      }
+    } else {
+      if (expYears >= 2) {
+        expStatus = 'Exceeds Benchmark';
+        expMsg = `Experience (${cand.experience}) meets target benchmark (2+ years).`;
+      } else if (expYears >= 1) {
+        expStatus = 'Meets Minimum';
+        expMsg = `Experience (${cand.experience}) meets absolute minimum (1+ years).`;
+      } else {
+        expMsg = `Experience (${cand.experience}) is below target (2+ years).`;
+      }
     }
+
+    let recommendation = 'Apply Automated Screener to get recommendation.';
+    if (cand.score >= 85) {
+      recommendation = 'Highly Recommended. The candidate exhibits strong alignment in both relevant retail skills and operational experience.';
+    } else if (cand.score >= 70) {
+      recommendation = 'Strong Match. The candidate has good skills alignment but may have slightly less experience than the target benchmark.';
+    } else if (cand.score > 0) {
+      recommendation = 'Not Recommended. The candidate lacks key skills or experience required for this specific role.';
+    }
+
+    return {
+      matchedSkills,
+      unmatchedSkills,
+      expStatus,
+      expMsg,
+      recommendation
+    };
+  };
+
+  const runCVScreener = async () => {
+    setIsScreening(true);
+    setScreeningProgress(0);
+    setScreeningLogs([]);
+
+    const benchmarkRole = targetScreeningRole;
+    const filteredCandidates = candidates.filter(c => c.appliedRole === benchmarkRole || benchmarkRole === 'All');
+    
+    const logs: string[] = [];
+    const addLog = (msg: string) => {
+      logs.push(msg);
+      setScreeningLogs([...logs]);
+    };
+
+    addLog(`Initializing Automated CV Screening for role: ${benchmarkRole}`);
+    
+    if (filteredCandidates.length === 0) {
+      addLog("No candidates found matching this role.");
+      setScreeningProgress(100);
+      await new Promise(r => setTimeout(r, 1200));
+      setIsScreening(false);
+      return;
+    }
+
+    for (let i = 0; i < filteredCandidates.length; i++) {
+      const cand = filteredCandidates[i];
+      setActiveScreeningCandName(cand.name);
+      
+      const progress = Math.round((i / filteredCandidates.length) * 100);
+      setScreeningProgress(progress);
+      
+      addLog(`[Scanning] Loading credentials profile for ${cand.name}...`);
+      await new Promise(r => setTimeout(r, 450));
+
+      addLog(`[Matching] Checking experience: "${cand.experience}"...`);
+      await new Promise(r => setTimeout(r, 450));
+      
+      let score = 50;
+      const expYears = parseFloat(cand.experience) || 0;
+      const targetRole = cand.appliedRole;
+
+      if (targetRole === 'Store Manager') {
+        if (expYears >= 5) {
+          score += 25;
+          addLog(`  ✔ Experience meets Store Manager target (>=5 years).`);
+        } else if (expYears >= 3) {
+          score += 15;
+          addLog(`  ▲ Moderate experience meets absolute minimum (>=3 years).`);
+        } else {
+          addLog(`  ✖ Experience below Store Manager threshold.`);
+        }
+      } else {
+        if (expYears >= 2) {
+          score += 25;
+          addLog(`  ✔ Experience meets role benchmark (>=2 years).`);
+        } else if (expYears >= 1) {
+          score += 15;
+          addLog(`  ✔ Basic experience meets minimum (>=1 years).`);
+        } else {
+          addLog(`  ▲ Entry-level experience.`);
+        }
+      }
+
+      addLog(`[Matching] Inspecting skills index...`);
+      await new Promise(r => setTimeout(r, 400));
+
+      const roleSkills: { [key: string]: string[] } = {
+        'Sales Associate': ['customer', 'billing', 'gold', 'malayalam', 'engagement', 'appraisal'],
+        'Store Manager': ['operations', 'inventory', 'staff', 'billing', 'tally', 'audit'],
+        'Accountant': ['tally', 'gst', 'reconciliation', 'excel', 'tax', 'finance']
+      };
+
+      const targetSkills = roleSkills[targetRole] || [];
+      let matchCount = 0;
+      
+      cand.skills.forEach(skill => {
+        const sLower = skill.toLowerCase();
+        targetSkills.forEach(reqSkill => {
+          if (sLower.includes(reqSkill)) {
+            matchCount++;
+          }
+        });
+      });
+
+      score += Math.min(25, matchCount * 6);
+      addLog(`  ✔ Found ${matchCount} matching skills for ${targetRole}.`);
+
+      const eduLower = cand.education.toLowerCase();
+      if (targetRole === 'Store Manager' && eduLower.includes('mba')) {
+        score += 5;
+        addLog(`  ✔ Bonus: MBA degree matches management track.`);
+      } else if (targetRole === 'Accountant' && (eduLower.includes('m.com') || eduLower.includes('finance') || eduLower.includes('b.com'))) {
+        score += 5;
+        addLog(`  ✔ Bonus: Finance degree matches accountant track.`);
+      }
+
+      const finalScore = Math.min(100, score);
+      let nextStatus = 'Applied';
+      if (finalScore >= 80) nextStatus = 'Shortlisted';
+      else if (finalScore >= 60) nextStatus = 'Under Review';
+      else nextStatus = 'Rejected';
+
+      addLog(`[Result] ${cand.name} scored ${finalScore}% match. Verdict: ${nextStatus}.`);
+
+      await updateCandidate(cand.id, {
+        score: finalScore,
+        status: nextStatus
+      });
+      await new Promise(r => setTimeout(r, 350));
+    }
+
+    setScreeningProgress(100);
+    addLog(`All candidates screened successfully for ${benchmarkRole}!`);
+    await new Promise(r => setTimeout(r, 800));
+    setIsScreening(false);
+    triggerToast(`Automated CV screening completed for ${benchmarkRole}!`);
   };
 
   const handleCheckboxToggle = async (field: string, checked: boolean) => {
@@ -565,149 +597,75 @@ ${yesterdayStr},u7,Sandra M.,09:15,18:10,o1,On Time,10`;
       )}
 
       {/* Interactive AI Call Modal Overlay */}
-      {activeCallCandidate && (
+      {isScreening && (
         <div className="pj-call-overlay">
-          <div className="pj-call-modal animate-scale-up">
-            {/* Call Header */}
-            <div className="call-modal-header">
+          <div className="pj-call-modal animate-scale-up" style={{ maxWidth: '580px', padding: '24px' }}>
+            <div className="call-modal-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
               <div className="flex-align-center gap-12">
-                <Icons.PhoneCall size={20} className="phone-pulse-icon text-success" />
+                <Icons.FileSearch size={22} className="text-warning pulsing-glow-active" style={{ color: 'var(--primary)' }} />
                 <div>
-                  <span className="text-muted text-xs uppercase letter-spacing">Outbound Screening Call</span>
-                  <h4>{activeCallCandidate.name}</h4>
-                  <span className="phone-number">+91 {activeCallCandidate.phone}</span>
+                  <span className="text-muted text-xs uppercase letter-spacing">Automated CV Screening Matcher</span>
+                  <h4 style={{ margin: 0 }}>Screening Role: {targetScreeningRole}</h4>
                 </div>
-              </div>
-              
-              <div className="flex-align-center gap-12">
-                <div className="language-selector" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <label className="text-xs mr-4" style={{ fontWeight: 600 }}>Lang:</label>
-                  <select 
-                    value={inputLanguage} 
-                    onChange={(e) => setInputLanguage(e.target.value as any)}
-                    className="dropdown-pj input-xs"
-                    disabled={isListening}
-                    style={{ padding: '2px 6px', fontSize: '12px' }}
-                  >
-                    <option value="ml-IN">Malayalam (മലയാളം)</option>
-                    <option value="en-US">English</option>
-                  </select>
-                </div>
-                {callStep === 6 && (
-                  <button className="primary-btn btn-sm text-sm" onClick={finishCall}>
-                    <Icons.PhoneOff size={14} />
-                    <span>Save & End Call</span>
-                  </button>
-                )}
               </div>
             </div>
 
-            {/* Call Status / Indicator */}
-            <div className="call-status-banner">
-              {callStep === 0 && <span className="status-badge calling"><Icons.Loader2 className="spinner-pj" size={14} /> Dialing candidate...</span>}
-              {callStep === 1 && <span className="status-badge connected"><Icons.Volume2 size={14} /> Call Connected (AI Speaking)</span>}
-              {callStep === 2 && <span className="status-badge listening"><Icons.Mic size={14} /> Awaiting Response 1 (Speak Now)</span>}
-              {callStep === 3 && <span className="status-badge connected"><Icons.Loader2 className="spinner-pj" size={14} /> AI Processing...</span>}
-              {callStep === 4 && <span className="status-badge listening"><Icons.Mic size={14} /> Awaiting Response 2 (Speak Now)</span>}
-              {callStep === 5 && <span className="status-badge connected"><Icons.Volume2 size={14} /> AI Wrapping up...</span>}
-              {callStep === 6 && <span className="status-badge ended"><Icons.CheckCircle size={14} /> Interview Completed</span>}
-            </div>
-
-            {/* Call Dialog Scroll Area */}
-            <div className="call-dialog-body" id="call-dialog-scroll">
-              {callTranscript.map((chat, idx) => (
+            <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 600 }}>
+                <span>Scanning Applicant CVs: {activeScreeningCandName || 'Initializing...'}</span>
+                <span>{screeningProgress}%</span>
+              </div>
+              <div className="progress-bar-bg" style={{ height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
                 <div 
-                  className={`chat-bubble-row ${chat.speaker === 'AI Agent' ? 'bot-row' : chat.speaker === 'System' ? 'system-row' : 'user-row'}`}
-                  key={idx}
-                >
-                  <div className="chat-avatar">
-                    {chat.speaker === 'AI Agent' ? 'AI' : chat.speaker === 'System' ? 'SYS' : 'C'}
-                  </div>
-                  <div className="chat-bubble">
-                    <span className="bubble-speaker">{chat.speaker}</span>
-                    <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{chat.text}</p>
-                  </div>
+                  className="progress-bar-fill" 
+                  style={{ 
+                    width: `${screeningProgress}%`, 
+                    height: '100%', 
+                    background: 'var(--primary-gradient)',
+                    transition: 'width 0.3s ease'
+                  }} 
+                />
+              </div>
+            </div>
+
+            <div 
+              style={{ 
+                marginTop: '16px', 
+                height: '220px', 
+                backgroundColor: 'var(--bg-tertiary)', 
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '12px',
+                overflowY: 'auto',
+                fontFamily: 'monospace',
+                fontSize: '11.5px',
+                color: 'var(--text-secondary)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px'
+              }}
+              ref={(el) => {
+                if (el) el.scrollTop = el.scrollHeight;
+              }}
+            >
+              {screeningLogs.map((log, idx) => (
+                <div key={idx} style={{ 
+                  color: log.includes('✔') ? 'var(--color-success)' : log.includes('✖') ? 'var(--color-danger)' : log.includes('Result') ? 'var(--accent)' : 'inherit'
+                }}>
+                  {log}
                 </div>
               ))}
-              
-              {isTranslating && (
-                <div className="chat-bubble-row user-row opacity-60">
-                  <div className="chat-avatar">TR</div>
-                  <div className="chat-bubble">
-                    <span className="bubble-speaker">Google Translate</span>
-                    <p className="flex-align-center gap-6" style={{ margin: 0 }}>
-                      <Icons.Loader2 className="spinner-pj" size={12} />
-                      Translating Malayalam to English...
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
-
-            {/* Mic / Response Section */}
-            {(callStep === 2 || callStep === 4) && (
-              <div className="call-mic-controls">
-                <div className="mic-buttons-row">
-                  <button 
-                    className={`mic-ring-btn ${isListening ? 'active-listening pulsing-glow-active' : ''}`}
-                    onClick={startListening}
-                  >
-                    <Icons.Mic size={28} />
-                  </button>
-                  <div className="mic-info">
-                    <strong>{isListening ? 'Listening to your voice...' : 'Click microphone to speak'}</strong>
-                    <p className="text-xs text-muted" style={{ margin: 0 }}>
-                      Speak in {inputLanguage === 'ml-IN' ? 'Malayalam' : 'English'}. We'll transcribe and translate it.
-                    </p>
-                  </div>
-                </div>
-
-                {interimSpeech && (
-                  <div className="interim-text-display">
-                    <Icons.Volume2 size={14} className="text-warning flex-shrink-0" />
-                    <span>"{interimSpeech}"</span>
-                    {!isListening && (
-                      <button className="primary-btn btn-xs ml-auto" onClick={() => submitAnswer(interimSpeech)}>
-                        Submit Spoken Answer
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* Text Fallback Input */}
-                <div className="text-fallback-input mt-12">
-                  <input 
-                    type="text" 
-                    placeholder={`Type response here in ${inputLanguage === 'ml-IN' ? 'Malayalam' : 'English'} if microphone is unavailable...`}
-                    value={typedAnswer}
-                    onChange={(e) => setTypedAnswer(e.target.value)}
-                    className="input-pj flex-grow-1"
-                    style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-primary)' }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && typedAnswer.trim()) {
-                        submitAnswer(typedAnswer);
-                      }
-                    }}
-                  />
-                  <button 
-                    className="primary-btn" 
-                    disabled={!typedAnswer.trim()}
-                    onClick={() => submitAnswer(typedAnswer)}
-                  >
-                    Submit
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Spacer/Close Fallback in Ringing state */}
-            {callStep === 0 && (
-              <div style={{ padding: '16px', display: 'flex', justifyContent: 'center', backgroundColor: 'var(--bg-tertiary)' }}>
-                <button className="secondary-btn btn-sm" onClick={() => setActiveCallCandidate(null)}>
-                  Cancel Call
-                </button>
-              </div>
-            )}
+            
+            <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+              <button 
+                className="secondary-btn btn-sm"
+                disabled={screeningProgress < 100}
+                onClick={() => setIsScreening(false)}
+              >
+                Close Matcher Console
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1122,7 +1080,7 @@ ${yesterdayStr},u7,Sandra M.,09:15,18:10,o1,On Time,10`;
             <div className="recruitment-banner card-full-width">
               <div className="banner-info">
                 <h3>AI Recruiter Panel</h3>
-                <p>Bulk CV Upload, AI parsing & automated outbound voice screening call logs via ElevenLabs.</p>
+                <p>Bulk CV Upload, AI parsing & automated CV screening evaluation benchmarks for Parakkat Jewels.</p>
               </div>
               <div className="banner-actions">
                 <button 
@@ -1142,6 +1100,42 @@ ${yesterdayStr},u7,Sandra M.,09:15,18:10,o1,On Time,10`;
                     </>
                   )}
                 </button>
+              </div>
+            </div>
+
+            {/* CV Shortlist Evaluator Console */}
+            <div className="dashboard-card-pj card-full-width mt-12" style={{ gridColumn: '1 / -1' }}>
+              <div className="pj-card-header">
+                <div className="flex-align-center gap-8">
+                  <Icons.Award size={18} className="gold-text-accent" />
+                  <h4>CV Shortlist Evaluator Console</h4>
+                </div>
+              </div>
+              <div style={{ padding: '16px 0 0 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
+                <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '60%' }}>
+                  Match candidate resumes automatically against benchmark qualifications (experience, certifications, skills) to shortlist matches instantly.
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <select 
+                    value={targetScreeningRole}
+                    onChange={(e) => setTargetScreeningRole(e.target.value)}
+                    className="dropdown-pj"
+                    style={{ padding: '8px 12px', fontSize: '13px', borderRadius: 'var(--radius-sm)' }}
+                  >
+                    <option value="All">All Applied Roles</option>
+                    <option value="Store Manager">Store Manager</option>
+                    <option value="Sales Associate">Sales Associate</option>
+                    <option value="Accountant">Accountant</option>
+                  </select>
+                  <button 
+                    className="primary-btn" 
+                    onClick={runCVScreener}
+                    style={{ padding: '8px 16px', fontSize: '13px' }}
+                  >
+                    <Icons.Play size={14} />
+                    <span>Run CV Screener Matcher</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1175,8 +1169,8 @@ ${yesterdayStr},u7,Sandra M.,09:15,18:10,o1,On Time,10`;
                       <th>Applied Role</th>
                       <th>Experience</th>
                       <th>Key Skills parsed</th>
-                      <th>AI Match Score</th>
-                      <th>Interview Status</th>
+                      <th>CV Match Score</th>
+                      <th>Screening Status</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -1208,7 +1202,7 @@ ${yesterdayStr},u7,Sandra M.,09:15,18:10,o1,On Time,10`;
                           <td>
                             <div className="fit-score-cell">
                               <span className={`fit-lbl ${cand.score >= 85 ? 'text-success' : cand.score >= 70 ? 'text-warning' : 'text-danger'}`}>
-                                {cand.score}% Fit
+                                {cand.score > 0 ? `${cand.score}% Match` : 'Unscreened'}
                               </span>
                               <div className="fit-bar-container">
                                 <div className="fit-bar" style={{ width: `${cand.score}%`, backgroundColor: cand.score >= 85 ? 'var(--color-success)' : cand.score >= 70 ? 'var(--color-warning)' : 'var(--color-danger)' }} />
@@ -1216,39 +1210,23 @@ ${yesterdayStr},u7,Sandra M.,09:15,18:10,o1,On Time,10`;
                             </div>
                           </td>
                           <td>
-                            <span className={`badge ${cand.interviewStatus === 'Completed' ? 'badge-low' : 'badge-medium'}`}>
-                              {cand.interviewStatus}
+                            <span className={`badge ${
+                              cand.status === 'Shortlisted' ? 'badge-low' : 
+                              cand.status === 'Under Review' ? 'badge-medium' : 
+                              cand.status === 'Rejected' ? 'badge-high' : 'badge-medium'
+                            }`}>
+                              {cand.status || 'Applied'}
                             </span>
                           </td>
                           <td>
                             <div className="actions-cell flex-align-center gap-8" onClick={e => e.stopPropagation()}>
-                              {cand.interviewStatus === 'Pending' ? (
-                                <button 
-                                  className="primary-btn btn-sm text-sm"
-                                  disabled={activeCallCandidate !== null}
-                                  onClick={() => handleRunAICall(cand.id)}
-                                >
-                                  {activeCallCandidate?.id === cand.id ? (
-                                    <>
-                                      <Icons.Loader2 className="spinner-pj" size={12} />
-                                      <span>Interviewing...</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Icons.PhoneCall size={12} />
-                                      <span>Trigger AI Interview</span>
-                                    </>
-                                  )}
-                                </button>
-                              ) : (
-                                <button 
-                                  className="secondary-btn btn-sm text-sm"
-                                  onClick={() => setSelectedCandidate(cand)}
-                                >
-                                  <Icons.FileText size={12} />
-                                  <span>View Log</span>
-                                </button>
-                              )}
+                              <button 
+                                className="secondary-btn btn-sm text-sm"
+                                onClick={() => setSelectedCandidate(cand)}
+                              >
+                                <Icons.Eye size={12} />
+                                <span>View Match</span>
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -1294,86 +1272,77 @@ ${yesterdayStr},u7,Sandra M.,09:15,18:10,o1,On Time,10`;
                       </div>
                     </div>
 
-                    {/* Interview Audio/Transcript Block */}
+                    {/* CV Screening Report Match */}
                     <div className="details-section-pj border-top mt-16 pt-16">
                       <div className="flex-row-justify">
-                        <h5>Outbound Call Interview Audio</h5>
-                        <span className="badge badge-low text-xs">ElevenLabs Simulated API</span>
+                        <h5>CV Match Screening Report</h5>
+                        <span className={`badge ${
+                          selectedCandidate.status === 'Shortlisted' ? 'badge-low' : 
+                          selectedCandidate.status === 'Under Review' ? 'badge-medium' : 
+                          selectedCandidate.status === 'Rejected' ? 'badge-high' : 'badge-medium'
+                        }`}>
+                          {selectedCandidate.status || 'Applied'}
+                        </span>
                       </div>
 
-                      {selectedCandidate.interviewStatus === 'Completed' ? (
-                        <div className="audio-player-box mt-12">
-                          <button 
-                            className="play-audio-btn"
-                            onClick={() => setIsPlayingAudio(!isPlayingAudio)}
-                          >
-                            {isPlayingAudio ? <Icons.Pause size={18} /> : <Icons.Play size={18} />}
-                          </button>
-                          
-                          <div className="player-progress-area">
-                            <div className="waves-animator">
-                              <span className={`wave-bar ${isPlayingAudio ? 'animating delay-1' : ''}`} />
-                              <span className={`wave-bar ${isPlayingAudio ? 'animating delay-2' : ''}`} />
-                              <span className={`wave-bar ${isPlayingAudio ? 'animating delay-3' : ''}`} style={{ height: '28px' }} />
-                              <span className={`wave-bar ${isPlayingAudio ? 'animating delay-4' : ''}`} />
-                              <span className={`wave-bar ${isPlayingAudio ? 'animating delay-5' : ''}`} style={{ height: '32px' }} />
-                              <span className={`wave-bar ${isPlayingAudio ? 'animating delay-6' : ''}`} />
-                              <span className={`wave-bar ${isPlayingAudio ? 'animating delay-7' : ''}`} />
+                      {selectedCandidate.score > 0 ? (
+                        (() => {
+                          const report = getCandMatchReport(selectedCandidate);
+                          return (
+                            <div className="cv-report-box mt-12" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                              <div style={{ fontSize: '13px', backgroundColor: 'var(--bg-secondary)', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                                <strong>Match Verdict:</strong>
+                                <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '12.5px', lineHeight: '1.4' }}>{report.recommendation}</p>
+                              </div>
+
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12.5px' }}>
+                                <strong>Experience Evaluation:</strong>
+                                <span style={{ fontWeight: 600, color: report.expStatus.includes('Exceeds') ? 'var(--color-success)' : report.expStatus.includes('Meets') ? 'var(--color-warning)' : 'var(--color-danger)' }}>
+                                  ● {report.expStatus}
+                                </span>
+                                <p style={{ margin: 0, color: 'var(--text-muted)' }}>{report.expMsg}</p>
+                              </div>
+
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12.5px' }}>
+                                <strong>Key Skills Matched:</strong>
+                                {report.matchedSkills.length > 0 ? (
+                                  <div className="skills-badge-list mt-4">
+                                    {report.matchedSkills.map((s, idx) => (
+                                      <span key={idx} className="badge badge-low text-xs">{s}</span>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span style={{ color: 'var(--color-danger)' }}>No critical role skills matched.</span>
+                                )}
+                              </div>
+
+                              {report.unmatchedSkills.length > 0 && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12.5px' }}>
+                                  <strong>Other Listed Skills:</strong>
+                                  <div className="skills-badge-list mt-4">
+                                    {report.unmatchedSkills.map((s, idx) => (
+                                      <span key={idx} className="badge badge-medium text-xs" style={{ opacity: 0.75 }}>{s}</span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                            <div className="progress-bar-bg">
-                              <div className="progress-bar-fill" style={{ width: `${audioProgress}%` }} />
-                            </div>
-                            <span className="time-lbl">01:{Math.floor(audioProgress * 0.4).toString().padStart(2, '0')} / 02:40</span>
-                          </div>
-                        </div>
+                          );
+                        })()
                       ) : (
-                        <div className="audio-placeholder-card mt-12">
-                          <Icons.PhoneCall size={24} className="phone-bounce-icon" />
-                          <p>Interview pending. Trigger the ElevenLabs outbound voice interview call to generate records.</p>
-                          <button 
-                            className="primary-btn btn-sm mt-8"
-                            disabled={activeCallCandidate !== null}
-                            onClick={() => handleRunAICall(selectedCandidate.id)}
-                          >
-                            {activeCallCandidate?.id === selectedCandidate.id ? "Connecting..." : "Trigger AI Phone Interview"}
-                          </button>
+                        <div className="audio-placeholder-card mt-12" style={{ padding: '20px', textAlign: 'center', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-sm)' }}>
+                          <Icons.SearchCode size={24} className="phone-bounce-icon" style={{ color: 'var(--primary)', marginBottom: '8px' }} />
+                          <p style={{ margin: 0, fontSize: '12.5px', color: 'var(--text-secondary)' }}>No screening data. Click "Run CV Screener Matcher" to evaluate this candidate's credentials.</p>
                         </div>
                       )}
                     </div>
-
-                    {/* Transcript Chat Bubbles */}
-                    {selectedCandidate.interviewStatus === 'Completed' && (
-                      <div className="details-section-pj border-top mt-16 pt-16">
-                        <h5>Conversational Transcript</h5>
-                        <div className="transcript-chat mt-12">
-                          {selectedCandidate.transcript && selectedCandidate.transcript.length > 0 ? (
-                            selectedCandidate.transcript.map((chat, idx) => (
-                              <div 
-                                className={`chat-bubble-row ${chat.speaker === 'AI Agent' || chat.speaker === 'AI Interviewer' ? 'bot-row' : 'user-row'}`}
-                                key={idx}
-                              >
-                                <div className="chat-avatar">
-                                  {chat.speaker === 'AI Agent' || chat.speaker === 'AI Interviewer' ? 'AI' : 'C'}
-                                </div>
-                                <div className="chat-bubble">
-                                  <span className="bubble-speaker">{chat.speaker}</span>
-                                  <p>{chat.text}</p>
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <p className="text-muted text-sm text-center">No dialog transcript compiled.</p>
-                          )}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               ) : (
                 <div className="dashboard-card-pj height-100 flex-center-card text-center text-muted">
                   <Icons.UserCheck size={48} className="placeholder-icon-color" />
                   <h4>Select a Candidate</h4>
-                  <p>Click on any candidate row in the comparison grid to view full CV parse documents, ElevenLabs voice recordings, and conversation transcript cards.</p>
+                  <p>Click on any candidate row in the comparison grid to view full CV parse documents, parsed skills, and automated match evaluation metrics.</p>
                 </div>
               )}
             </div>

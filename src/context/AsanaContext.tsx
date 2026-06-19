@@ -193,6 +193,7 @@ interface AsanaContextType {
   addCandidate: (candData: Partial<Candidate>) => Promise<void>;
   triggerAICall: (candId: string, transcript?: any[], score?: number) => Promise<void>;
   updateCandidateOnboarding: (candId: string, status: string, checklist: any) => Promise<void>;
+  updateCandidate: (candId: string, updates: Partial<Candidate>) => Promise<void>;
   uploadPunches: (punchList: Partial<Punch>[]) => Promise<void>;
 
   // Admin Actions
@@ -654,6 +655,22 @@ export const AsanaProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const updateCandidate = async (candId: string, updates: Partial<Candidate>) => {
+    try {
+      const res = await fetch(`${API_BASE}/hr/candidates/${candId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+
+      if (res.ok) {
+        setCandidates(prev => prev.map(c => c.id === candId ? { ...c, ...updates } : c));
+      }
+    } catch (e) {
+      console.error('Failed to update candidate', e);
+    }
+  };
+
   const uploadPunches = async (punchList: Partial<Punch>[]) => {
     try {
       const res = await fetch(`${API_BASE}/hr/punches/upload`, {
@@ -765,6 +782,7 @@ export const AsanaProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       addCandidate,
       triggerAICall,
       updateCandidateOnboarding,
+      updateCandidate,
       uploadPunches,
 
       addOutlet,

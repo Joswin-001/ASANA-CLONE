@@ -374,6 +374,25 @@ app.post('/api/hr/candidates/:id/simulate-call', async (req, res) => {
   res.json(updatedCandidate);
 });
 
+app.put('/api/hr/candidates/:id', async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+  const db = await readDB();
+
+  const candidateIndex = db.candidates.findIndex(c => c.id === id);
+  if (candidateIndex === -1) {
+    return res.status(404).json({ error: 'Candidate not found' });
+  }
+
+  db.candidates[candidateIndex] = {
+    ...db.candidates[candidateIndex],
+    ...updates
+  };
+
+  await writeDB(db);
+  res.json(db.candidates[candidateIndex]);
+});
+
 app.put('/api/hr/candidates/:id/onboarding', async (req, res) => {
   const { id } = req.params;
   const { onboardingStatus, onboardingChecklist } = req.body;
