@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 
-const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
+const API_BASE = import.meta.env.VITE_API_URL || (window.location.port === '5173' ? `http://${window.location.hostname}:5000/api` : '/api');
 
 // Types Definition
 export interface SubTask {

@@ -10,7 +10,6 @@ export const HRView: React.FC = () => {
     punches,
     grades,
     addCandidate,
-    triggerAICall,
     updateCandidateOnboarding,
     updateCandidate,
     uploadPunches,
@@ -41,8 +40,6 @@ export const HRView: React.FC = () => {
   // 2. AI Recruiter States
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('All');
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [audioProgress, setAudioProgress] = useState(35);
   const [isSimulatingUpload, setIsSimulatingUpload] = useState(false);
 
   // 2b. CV Screener States
@@ -76,16 +73,7 @@ export const HRView: React.FC = () => {
     }
   }, [candidates, selectedOnboardCandId]);
 
-  // Toggle audio play simulation
-  useEffect(() => {
-    let interval: any;
-    if (isPlayingAudio) {
-      interval = setInterval(() => {
-        setAudioProgress(prev => (prev >= 100 ? 0 : prev + 1));
-      }, 300);
-    }
-    return () => clearInterval(interval);
-  }, [isPlayingAudio]);
+
 
   // --- Handlers ---
   const handleLoadSampleCSV = () => {
@@ -208,34 +196,6 @@ ${yesterdayStr},u7,Sandra M.,09:15,18:10,o1,On Time,10`;
     }, 1500);
   };
 
-  const speakText = (text: string) => {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    
-    const voices = window.speechSynthesis.getVoices();
-    const voice = voices.find(v => v.lang.includes('US') && (v.name.includes('Female') || v.name.includes('Google') || v.name.includes('Zira')));
-    if (voice) utterance.voice = voice;
-    window.speechSynthesis.speak(utterance);
-  };
-
-  const translateMalayalamToEnglish = async (text: string): Promise<string> => {
-    if (!text.trim()) return '';
-    try {
-      setIsTranslating(true);
-      const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ml&tl=en&dt=t&q=${encodeURIComponent(text)}`);
-      if (res.ok) {
-        const data = await res.json();
-        setIsTranslating(false);
-        return data[0][0][0] || 'Translation unavailable';
-      }
-    } catch (e) {
-      console.error('Translation failed', e);
-    }
-    setIsTranslating(false);
-    return 'Translation failed';
-  };
 
   const getCandMatchReport = (cand: Candidate) => {
     const expYears = parseFloat(cand.experience) || 0;

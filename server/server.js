@@ -452,6 +452,19 @@ app.get('/api/hr/grades', async (req, res) => {
   res.json(db.payGrades || []);
 });
 
+// Serve static assets from Vite's production build folder
+const distPath = path.join(__dirname, '../dist');
+app.use(express.static(distPath));
+
+// Fallback to index.html for React SPA routing
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  res.sendFile(path.join(distPath, 'index.html'));
+});
+
 app.listen(PORT, () => {
   console.log(`Parakkat Portal Backend server running on http://localhost:${PORT}`);
 });
+
