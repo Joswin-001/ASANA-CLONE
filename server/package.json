@@ -1,0 +1,19 @@
+{
+  "name": "parakkat-portal-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Parakkat Jewelery portal",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.1",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}

@@ -1,0 +1,510 @@
+{
+  "zones": [
+    {
+      "id": "z1",
+      "name": "South Zone"
+    },
+    {
+      "id": "z2",
+      "name": "Central Zone"
+    },
+    {
+      "id": "z3",
+      "name": "North Zone"
+    }
+  ],
+  "outlets": [
+    {
+      "id": "o1",
+      "name": "Ernakulam MG Road",
+      "zoneId": "z2"
+    },
+    {
+      "id": "o2",
+      "name": "Thrissur Round East",
+      "zoneId": "z2"
+    },
+    {
+      "id": "o3",
+      "name": "Trivandrum Lulu Mall",
+      "zoneId": "z1"
+    },
+    {
+      "id": "o4",
+      "name": "Kozhikode Focus Mall",
+      "zoneId": "z3"
+    }
+  ],
+  "users": [
+    {
+      "id": "u1",
+      "email": "ceo@parakkat.com",
+      "name": "Abishek Parakkat",
+      "role": "ceo"
+    },
+    {
+      "id": "u2",
+      "email": "zonal.central@parakkat.com",
+      "name": "Rajesh Nair",
+      "role": "zonal_manager",
+      "zoneId": "z2"
+    },
+    {
+      "id": "u3",
+      "email": "zonal.south@parakkat.com",
+      "name": "Haris Kumar",
+      "role": "zonal_manager",
+      "zoneId": "z1"
+    },
+    {
+      "id": "u4",
+      "email": "mgr.ekm@parakkat.com",
+      "name": "Anju Kurian",
+      "role": "store_manager",
+      "outletId": "o1",
+      "zoneId": "z2"
+    },
+    {
+      "id": "u5",
+      "email": "mgr.tsr@parakkat.com",
+      "name": "Bibin Jos",
+      "role": "store_manager",
+      "outletId": "o2",
+      "zoneId": "z2"
+    },
+    {
+      "id": "u6",
+      "email": "emp1@parakkat.com",
+      "name": "Rahul V.",
+      "role": "employee",
+      "outletId": "o1",
+      "zoneId": "z2"
+    },
+    {
+      "id": "u7",
+      "email": "emp2@parakkat.com",
+      "name": "Sandra M.",
+      "role": "employee",
+      "outletId": "o1",
+      "zoneId": "z2"
+    },
+    {
+      "id": "u8",
+      "email": "admin@parakkat.com",
+      "name": "System Admin",
+      "role": "admin"
+    }
+  ],
+  "broadcasts": [
+    {
+      "id": "b1",
+      "senderId": "u1",
+      "senderName": "Abishek Parakkat (CEO)",
+      "audioBase64": "",
+      "transcription": "Please focus on cleaning up the gold display counters today. The Akshaya Tritiya rush is coming, and everything needs to look immaculate by tomorrow morning.",
+      "targets": {
+        "roles": [
+          "zonal_manager",
+          "store_manager",
+          "employee"
+        ],
+        "zones": [
+          "z2"
+        ],
+        "outlets": [
+          "o1",
+          "o2"
+        ]
+      },
+      "createdAt": "2026-06-17T10:00:00.000Z"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "broadcastId": "b1",
+      "title": "Clean gold display counters",
+      "description": "Ensure gold display counters are cleaned and inventory is polished.",
+      "assignedToId": "u4",
+      "outletId": "o1",
+      "zoneId": "z2",
+      "completed": false,
+      "priority": "high",
+      "dueDate": "2026-06-18",
+      "subtasks": [
+        {
+          "id": "sub1",
+          "title": "Wipe glass display frames",
+          "completed": false
+        },
+        {
+          "id": "sub2",
+          "title": "Polish gold ornaments showcase",
+          "completed": false
+        }
+      ],
+      "comments": [],
+      "createdAt": "2026-06-17T10:00:00.000Z"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "cand1",
+      "name": "Ananya Nair",
+      "email": "ananya.nair@gmail.com",
+      "phone": "+91 9876543210",
+      "appliedRole": "Sales Associate",
+      "status": "Shortlisted",
+      "skills": [
+        "Customer Relations",
+        "Billing",
+        "Gold Appraisal",
+        "Malayalam Fluent"
+      ],
+      "experience": "3.5 Years",
+      "education": "B.Com (Calicut University)",
+      "cvSummary": "Experienced retail sales associate with strong customer support records in Malabar region jeweler shops. Professional gold appraisal and cataloging familiarity.",
+      "score": 92,
+      "interviewStatus": "Completed",
+      "transcript": [
+        {
+          "speaker": "AI Interviewer",
+          "text": "Hello, thank you for taking the time to answer a few questions. Tell me about your experience selling jewelry ornaments."
+        },
+        {
+          "speaker": "Ananya Nair",
+          "text": "Hi, I have been working in retail jewelry sales for over 3 years. I specialize in gold appraisals and guiding customers through diamond collections."
+        },
+        {
+          "speaker": "AI Interviewer",
+          "text": "Excellent. How do you handle a customer who finds the gold pricing or making charges too high?"
+        },
+        {
+          "speaker": "Ananya Nair",
+          "text": "I explain the unique craftsmanship, return values, and purity guarantees of our jewelry, making them see it as a valuable long-term investment."
+        }
+      ],
+      "onboardingStatus": "Offer Sent",
+      "onboardingChecklist": {
+        "offerAccepted": true,
+        "aadhaarSubmitted": true,
+        "panSubmitted": true,
+        "bankDetailsSubmitted": false,
+        "certificatesSubmitted": true
+      }
+    },
+    {
+      "id": "cand2",
+      "name": "Vipin Das",
+      "email": "vipin.das@outlook.com",
+      "phone": "+91 8765432109",
+      "appliedRole": "Store Manager",
+      "status": "Interview Scheduled",
+      "skills": [
+        "Store Operations",
+        "Inventory Audit",
+        "Tally ERP",
+        "Staff Management"
+      ],
+      "experience": "7 Years",
+      "education": "MBA in Operations",
+      "cvSummary": "Operations manager with store control records. Experience managing billing systems, visual merchandising, and staff rotas.",
+      "score": 84,
+      "interviewStatus": "Pending",
+      "transcript": [],
+      "onboardingStatus": "Applied",
+      "onboardingChecklist": {
+        "offerAccepted": false,
+        "aadhaarSubmitted": false,
+        "panSubmitted": false,
+        "bankDetailsSubmitted": false,
+        "certificatesSubmitted": false
+      }
+    },
+    {
+      "id": "cand3",
+      "name": "Devika S.",
+      "email": "devika.s@gmail.com",
+      "phone": "+91 7654321098",
+      "appliedRole": "Accountant",
+      "status": "Applied",
+      "skills": [
+        "Tally Prime",
+        "GST Filing",
+        "Bank Reconciliation",
+        "Excel Sheets"
+      ],
+      "experience": "2 Years",
+      "education": "M.Com Finance",
+      "cvSummary": "Certified accountant with reconciliation logs and GST returns experience in Kerala business circles.",
+      "score": 75,
+      "interviewStatus": "Pending",
+      "transcript": [],
+      "onboardingStatus": "Applied",
+      "onboardingChecklist": {
+        "offerAccepted": false,
+        "aadhaarSubmitted": false,
+        "panSubmitted": false,
+        "bankDetailsSubmitted": false,
+        "certificatesSubmitted": false
+      }
+    },
+    {
+      "id": "cand_1781695182419",
+      "name": "Meera Krishnan",
+      "email": "meera.krish@yahoo.com",
+      "phone": "+91 9446738291",
+      "appliedRole": "Sales Associate",
+      "status": "Shortlisted",
+      "skills": [
+        "Customer Engagement",
+        "Gold Jewelry Appraisal",
+        "Malayalam & English Billing"
+      ],
+      "experience": "2 Years",
+      "education": "B.Sc Physics (Calicut University)",
+      "cvSummary": "Customer associate with retail showrooms records in Ernakulam. Experienced in diamond segment appraisal.",
+      "score": 90,
+      "interviewStatus": "Completed",
+      "transcript": [
+        {
+          "speaker": "AI Agent",
+          "text": "Hello, thank you for taking our call. Why are you interested in joining Parakkat Jewels as a Sales Associate?"
+        },
+        {
+          "speaker": "Meera Krishnan",
+          "text": "Parakkat Jewels is highly respected in Kerala. I love interacting with customers and have a background explaining ornament designs."
+        },
+        {
+          "speaker": "AI Agent",
+          "text": "How do you handle peak rush hours during seasonal promotions?"
+        },
+        {
+          "speaker": "Meera Krishnan",
+          "text": "I stay focused, coordinate with cache-desks immediately, and greet waiting customers so they feel attended to."
+        }
+      ],
+      "onboardingStatus": "Offer Accepted",
+      "onboardingChecklist": {
+        "offerAccepted": true,
+        "aadhaarSubmitted": true,
+        "panSubmitted": true,
+        "bankDetailsSubmitted": false,
+        "certificatesSubmitted": true
+      }
+    },
+    {
+      "id": "cand_1781695182439",
+      "name": "Gokul Das",
+      "email": "gokul.das@gmail.com",
+      "phone": "+91 8089423122",
+      "appliedRole": "Store Manager",
+      "status": "Applied",
+      "skills": [
+        "Inventory Audit",
+        "Store Operations",
+        "Conflict Resolution",
+        "Billing Systems"
+      ],
+      "experience": "5 Years",
+      "education": "BBA Retail (MG University)",
+      "cvSummary": "Retail store administrator managing gold asset security, cashier grids, and 15+ staff schedules.",
+      "score": 78,
+      "interviewStatus": "Pending",
+      "transcript": [],
+      "onboardingStatus": "Applied",
+      "onboardingChecklist": {
+        "offerAccepted": false,
+        "aadhaarSubmitted": false,
+        "panSubmitted": false,
+        "bankDetailsSubmitted": false,
+        "certificatesSubmitted": false
+      }
+    },
+    {
+      "id": "cand_1781695182481",
+      "name": "Aparna Nair",
+      "email": "aparna.n@outlook.com",
+      "phone": "+91 9745123984",
+      "appliedRole": "Accountant",
+      "status": "Applied",
+      "skills": [
+        "Tally Prime",
+        "GST Calculation",
+        "Kerala Tax Slabs",
+        "Excel Audit"
+      ],
+      "experience": "4 Years",
+      "education": "M.Com Finance (Kerala University)",
+      "cvSummary": "Certified financial accountant handling GST filings, monthly store balances, and employee PF ledgers.",
+      "score": 85,
+      "interviewStatus": "Pending",
+      "transcript": [],
+      "onboardingStatus": "Applied",
+      "onboardingChecklist": {
+        "offerAccepted": false,
+        "aadhaarSubmitted": false,
+        "panSubmitted": false,
+        "bankDetailsSubmitted": false,
+        "certificatesSubmitted": false
+      }
+    }
+  ],
+  "punches": [
+    {
+      "id": "pn_upload_1781695157386_0",
+      "employeeId": "u6",
+      "employeeName": "Rahul V.",
+      "outletId": "o1",
+      "date": "2026-06-17",
+      "clockIn": "09:12",
+      "clockOut": "18:35",
+      "status": "On Time",
+      "overtimeMinutes": 20
+    },
+    {
+      "id": "pn_upload_1781695157386_1",
+      "employeeId": "u7",
+      "employeeName": "Sandra M.",
+      "outletId": "o1",
+      "date": "2026-06-17",
+      "clockIn": "09:48",
+      "clockOut": "18:05",
+      "status": "Late",
+      "overtimeMinutes": 0
+    },
+    {
+      "id": "pn_upload_1781695157386_2",
+      "employeeId": "u4",
+      "employeeName": "Anju Kurian",
+      "outletId": "o1",
+      "date": "2026-06-17",
+      "clockIn": "08:55",
+      "clockOut": "19:10",
+      "status": "On Time",
+      "overtimeMinutes": 70
+    },
+    {
+      "id": "pn_upload_1781695157386_3",
+      "employeeId": "u5",
+      "employeeName": "Bibin Jos",
+      "outletId": "o2",
+      "date": "2026-06-17",
+      "clockIn": "09:02",
+      "clockOut": "18:45",
+      "status": "On Time",
+      "overtimeMinutes": 45
+    },
+    {
+      "id": "pn_upload_1781695157386_4",
+      "employeeId": "u6",
+      "employeeName": "Rahul V.",
+      "outletId": "o1",
+      "date": "2026-06-16",
+      "clockIn": "09:05",
+      "clockOut": "18:00",
+      "status": "On Time",
+      "overtimeMinutes": 0
+    },
+    {
+      "id": "pn_upload_1781695157386_5",
+      "employeeId": "u7",
+      "employeeName": "Sandra M.",
+      "outletId": "o1",
+      "date": "2026-06-16",
+      "clockIn": "09:15",
+      "clockOut": "18:10",
+      "status": "On Time",
+      "overtimeMinutes": 10
+    },
+    {
+      "id": "pn1",
+      "employeeId": "u6",
+      "employeeName": "Rahul V.",
+      "outletId": "o1",
+      "date": "2026-06-17",
+      "clockIn": "09:15",
+      "clockOut": "18:30",
+      "status": "On Time",
+      "overtimeMinutes": 30
+    },
+    {
+      "id": "pn2",
+      "employeeId": "u7",
+      "employeeName": "Sandra M.",
+      "outletId": "o1",
+      "date": "2026-06-17",
+      "clockIn": "09:42",
+      "clockOut": "18:05",
+      "status": "Late",
+      "overtimeMinutes": 0
+    },
+    {
+      "id": "pn3",
+      "employeeId": "u4",
+      "employeeName": "Anju Kurian",
+      "outletId": "o1",
+      "date": "2026-06-17",
+      "clockIn": "09:05",
+      "clockOut": "18:45",
+      "status": "On Time",
+      "overtimeMinutes": 45
+    },
+    {
+      "id": "pn4",
+      "employeeId": "u6",
+      "employeeName": "Rahul V.",
+      "outletId": "o1",
+      "date": "2026-06-16",
+      "clockIn": "09:12",
+      "clockOut": "18:15",
+      "status": "On Time",
+      "overtimeMinutes": 15
+    },
+    {
+      "id": "pn5",
+      "employeeId": "u7",
+      "employeeName": "Sandra M.",
+      "outletId": "o1",
+      "date": "2026-06-16",
+      "clockIn": "09:18",
+      "clockOut": "18:00",
+      "status": "On Time",
+      "overtimeMinutes": 0
+    }
+  ],
+  "payGrades": [
+    {
+      "id": "g1",
+      "roleName": "Store Manager",
+      "basic": 25000,
+      "hra": 8000,
+      "da": 4000,
+      "special": 5000
+    },
+    {
+      "id": "g2",
+      "roleName": "Sales Associate",
+      "basic": 15000,
+      "hra": 4500,
+      "da": 2500,
+      "special": 2000
+    },
+    {
+      "id": "g3",
+      "roleName": "Accountant",
+      "basic": 18000,
+      "hra": 5500,
+      "da": 3000,
+      "special": 3000
+    },
+    {
+      "id": "g4",
+      "roleName": "Employee",
+      "basic": 12000,
+      "hra": 3500,
+      "da": 2000,
+      "special": 1500
+    }
+  ]
+}
